@@ -1,25 +1,24 @@
-# ingress.yaml
+{{- if .Values.ingress.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: doadores-ingress
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingress.className | quote }}
 spec:
-  ingressClassName: nginx
   rules:
-  - host: k8s.local
-    http:
-      paths:
-      - path: /api
-        pathType: Prefix
-        backend:
-          service:
-            name: backend
-            port: 
-              number: 5000
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: frontend
-            port: 
-              number: 80
+    {{- range .Values.ingress.hosts }}
+    - host: {{ .host }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
+          {{- end }}
+    {{- end }}
+{{- end }}
