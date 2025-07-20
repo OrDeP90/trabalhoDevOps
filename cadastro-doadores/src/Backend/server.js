@@ -5,10 +5,19 @@ const db = require('./db');
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); 
+app.use(express.urlencoded({ extended: true }));
 
+// Cria um router com prefixo /api
+const apiRouter = express.Router();
 
-app.get('/doadores', async (req, res) => {
+apiRouter.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy',
+    dbConnection: 'ok'
+  });
+});
+
+apiRouter.get('/doadores', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM doadores WHERE consentimento = true');
     res.json(rows);
@@ -18,10 +27,8 @@ app.get('/doadores', async (req, res) => {
   }
 });
 
-
-app.post('/doadores', async (req, res) => {
+apiRouter.post('/doadores', async (req, res) => {
   const { nome, tipo_sanguineo, data_nascimento, email, consentimento } = req.body;
-  
   
   if (!nome || !tipo_sanguineo || !data_nascimento || !email) {
     return res.status(400).json({ error: 'Dados incompletos' });
@@ -43,5 +50,8 @@ app.post('/doadores', async (req, res) => {
     res.status(500).json({ error: 'Erro ao cadastrar doador' });
   }
 });
+
+// Aplica o router com prefixo /api
+app.use('/api', apiRouter);
 
 app.listen(5000, () => console.log('Backend rodando na porta 5000'));

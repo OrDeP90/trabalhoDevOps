@@ -1,0 +1,94 @@
+replicaCount: 1
+
+serviceAccount:
+  create: false  # Desativado já que não está sendo usado
+  name: ""
+
+backend:
+  service:
+    port: 5000
+    type: ClusterIP
+  image:
+    repository: backend-image
+    tag: latest
+    pullPolicy: Never
+  env:
+    DB_HOST: "mysql"
+    DB_NAME: "cadastro_doadores"
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+  probePath: /api/health
+  livenessProbe:
+    path: /api/health
+    initialDelaySeconds: 45  # Reduzido de 90
+    periodSeconds: 15
+    timeoutSeconds: 5  # Adicionado
+    failureThreshold: 3  # Adicionado
+  readinessProbe:
+    path: /api/health
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 5  # Adicionado
+    failureThreshold: 3  # Adicionado
+  startupProbe:
+    path: /api/health  # Adicionado
+    initialDelaySeconds: 5  # Adicionado
+    periodSeconds: 10
+    timeoutSeconds: 5  # Adicionado
+    failureThreshold: 30
+
+frontend:
+  service:
+    port: 80
+    type: ClusterIP
+  image:
+    repository: frontend-image
+    tag: latest
+    pullPolicy: Never
+  env:
+    API_BASE_URL: "http://backend:5000"
+  resources:
+    limits:
+      cpu: "300m"
+      memory: "256Mi"
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+
+mysql:
+  image:
+    repository: mysql
+    tag: 5.7
+    pullPolicy: IfNotPresent
+  service:
+    port: 3306
+  rootPassword: "root"  # Removi o espaço extra
+  database: "cadastro_doadores"
+  resources:
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+  persistence:
+    enabled: false  # Altere para true em produção
+    size: "1Gi"
+
+ingress:
+  enabled: true
+  className: "nginx"
+  hosts:
+    - host: "k8s.local"
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: "api.k8s.local"
+      paths:
+        - path: /
+          pathType: Prefix

@@ -10,63 +10,56 @@ function App() {
   const [showDonors, setShowDonors] = useState(false);
   const [donors, setDonors] = useState([]);
 
-// Atualize as funções handleSubmit e fetchDonors para:
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setMessage(''); // Limpa mensagens
+  // Configuração dinâmica da URL base
+  const API_BASE = window.location.hostname === 'k8s.local' ? '' : '/api';
 
-  try {
-    const response = await fetch('/api/doadores', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        nome: name,
-        tipo_sanguineo: bloodType,
-        data_nascimento: dob,
-        email: email,
-        consentimento: consent,
-      }),
-    });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage('');
 
-    const data = await response.json(); 
-    
-    if (!response.ok) {
-      throw new Error(data.message || 'Erro ao cadastrar doação');
+    try {
+      const response = await fetch(`${API_BASE}/doadores`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: name,
+          tipo_sanguineo: bloodType,
+          data_nascimento: dob,
+          email: email,
+          consentimento: consent,
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) throw new Error(data.error || 'Erro ao cadastrar');
+      
+      setMessage(data.message);
+      setName('');
+      setBloodType('');
+      setDob('');
+      setEmail('');
+      setConsent(false);
+      await fetchDonors();
+      
+    } catch (err) {
+      setMessage(err.message || 'Erro na conexão');
+      console.error('Erro:', err);
     }
+  };
 
-    setMessage(data.message || 'Doação cadastrada com sucesso!');
-    // Reset form
-    setName('');
-    setBloodType('');
-    setDob('');
-    setEmail('');
-    setConsent(false);
-    
-    // Atualiza a lista de doadores depois do cadastro
-    await fetchDonors();
-    
-  } catch (err) {
-    setMessage(err.message || 'Erro na conexão com o servidor');
-    console.error('Erro no cadastro:', err);
-  }
-};
-
-const fetchDonors = async () => {
-  try {
-    const res = await fetch('/api/doadores');
-    
-    if (!res.ok) {
-      throw new Error('Falha ao carregar dados');
+  const fetchDonors = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/doadores`);
+      if (!res.ok) throw new Error('Falha ao carregar');
+      const data = await res.json();
+      setDonors(data);
+      setShowDonors(true);
+    } catch (err) {
+      setMessage(err.message);
+      console.error('Erro:', err);
     }
-    
-    const data = await res.json();
-    setDonors(data); // Remove o filter pois o backend já filtra
-    setShowDonors(true);
-  } catch (err) {
-    setMessage(err.message || 'Erro ao carregar doadores');
-    console.error('Erro ao buscar doadores:', err);
-  }
-};
+  };
 
   return (
     <div className="container">
