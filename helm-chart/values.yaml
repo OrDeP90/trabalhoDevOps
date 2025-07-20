@@ -9,7 +9,7 @@ backend:
     port: 5000
     type: ClusterIP
   image:
-    repository: backend-image
+    repository: doadores-backend
     tag: latest
     pullPolicy: Never
   env:
@@ -47,7 +47,7 @@ frontend:
     port: 80
     type: ClusterIP
   image:
-    repository: frontend-image
+    repository: doadores-frontend
     tag: latest
     pullPolicy: Never
   env:
