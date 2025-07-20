@@ -15,5 +15,7 @@ kubectl create configmap mysql-init --from-file=./helm-chart/db-init/init.sql
 # 4. Aplica as configuraÃ§Ãµes Kubernetes
 helm install cadastro-doadores ./helm-chart
 
+minikube addons enable ingress
+
 Write-Host "âœ… Deploy concluÃ­do! Acesse:" -ForegroundColor Green
 minikube service list
