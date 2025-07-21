@@ -12,10 +12,19 @@ docker build -t doadores-frontend ./cadastro-doadores/src/Frontend/
 docker build -t doadores-backend ./cadastro-doadores/src/Backend/
 kubectl create configmap mysql-init --from-file=./helm-chart/db-init/init.sql
 
-# 4. Aplica as configuraÃ§Ãµes Kubernetes
+# 4. Enable Ingress
+minikube addons enable ingress
+
+# 5. Instalar o Helm
 helm install cadastro-doadores ./helm-chart
 
-minikube addons enable ingress
+#6.0 - Ao rodar em k8s.local, é possivel visualizar a aplicação, porém ela apresenta uma falha ao realizar uma requisição.
+
+
+#6 Expor a porta do frontend
+kubectl port-forward svc/frontend 8080:80
+
+#7 Abrir no navegador a Url localhost:8080
 
 Write-Host "âœ… Deploy concluÃ­do! Acesse:" -ForegroundColor Green
 minikube service list
