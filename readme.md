@@ -9,145 +9,141 @@ O projeto para ver o funcionamento do projeto, pode-se abrir a url k8s.local, a 
 Outra possibilidade, é rodar utilizando kubectl port-forward svc/frontend 8080:80, após a execução do script de deploy. Assim, ao abrir na url localhost:8080, há a aplicação 100% funcional.
 
 
+Com base nas informações e arquivos YAML fornecidos, aqui está um exemplo completo de **README para PDF** do seu projeto de Kubernetes com Minikube, descrevendo a aplicação, os componentes, containers e os artefatos do Kubernetes utilizados:
 
-# README - Sistema de Cadastro de Doadores no Kubernetes (Minikube)
+---
 
-## Visão Geral do Projeto
+## 📘 **Projeto DevOps - Cadastro de Doadores de Sangue com Kubernetes (Minikube)**
 
-Este projeto implementa um sistema de cadastro de doadores utilizando uma arquitetura de microsserviços containerizados e implantados no Kubernetes (Minikube). A aplicação consiste em:
+### 📌 Descrição da Aplicação
 
-- **Frontend**: Aplicação web desenvolvida em React
-- **Backend**: API REST desenvolvida em Node.js
-- **Banco de Dados**: MySQL para armazenamento persistente
+A aplicação desenvolvida tem como objetivo **cadastrar doadores de sangue** por meio de uma **interface web**, com os dados persistidos em um banco de dados MySQL. O sistema foi conteinerizado e implantado em um ambiente Kubernetes local utilizando o **Minikube**, com suporte ao gerenciamento via Helm Charts.
 
-## Estrutura do Projeto
+---
 
+### 🧩 Componentes da Aplicação
+
+A aplicação é composta por três componentes principais, cada um executando em um contêiner diferente:
+
+| Componente         | Função                                               | Tecnologia        |
+| ------------------ | ---------------------------------------------------- | ----------------- |
+| **Frontend**       | Interface web para cadastro e listagem de doadores   | React             |
+| **Backend**        | API REST que recebe e processa os dados da interface | Node.js + Express |
+| **Banco de Dados** | Armazena os dados dos doadores                       | MySQL 5.7         |
+
+---
+
+### 📦 Estrutura dos Containers
+
+* **doadores-frontend**: executa a interface web.
+* **doadores-backend**: fornece a API REST e interage com o banco de dados.
+* **mysql**: instância do banco de dados MySQL, iniciada com script `init.sql`.
+
+---
+
+### ⚙️ Artefatos Kubernetes Utilizados
+
+#### 🛠️ Deployment
+
+Controlam a criação e o gerenciamento dos pods.
+
+* **backend-deployment**: cria pods com a imagem do Node.js, configura variáveis de ambiente e probes de saúde.
+* **frontend-deployment**: gera os pods com o React, define o `API_BASE_URL` e probes.
+* **mysql-deployment**: cria o contêiner do MySQL com configuração inicial via `ConfigMap`.
+
+#### 🌐 Service
+
+Expõem os componentes para comunicação interna no cluster.
+
+* **backend-service**: expõe o backend via `ClusterIP` na porta 5000.
+* **frontend-service**: expõe o frontend internamente na porta 80.
+* **mysql-service**: expõe o banco de dados internamente na porta 3306.
+
+> Os serviços do tipo **ClusterIP** permitem que os pods se comuniquem entre si dentro do cluster Kubernetes, utilizando os nomes dos serviços como hostname (por exemplo, `backend`, `mysql`).
+
+#### 🌍 Ingress
+
+* **doadores-ingress**: configura o acesso externo à aplicação via hostname `k8s.local`. Redireciona o tráfego HTTP para o serviço `frontend`.
+
+#### 📄 ConfigMap e Secret
+
+* `ConfigMap`: contém o script `init.sql` para inicialização do banco.
+* `Secret`: contém as credenciais de acesso ao MySQL utilizadas no backend.
+
+---
+
+### 📄 values.yaml (Resumo)
+
+O arquivo `values.yaml` centraliza as configurações dos recursos como:
+
+* Imagens e tags dos contêineres.
+* Recursos solicitados e limites (CPU e memória).
+* Probes de liveness, readiness e startup.
+* Nome do banco, senhas, URLs e porta dos serviços.
+* Habilitação e configuração do Ingress.
+
+---
+
+### 🚀 Como Executar o Projeto
+
+#### Pré-requisitos:
+
+* PowerShell 5.1+ no Windows
+* Minikube instalado com driver Docker
+* Docker instalado
+* Helm instalado
+
+#### Passos de Deploy:
+
+```powershell
+# 1. Iniciar o Minikube
+minikube start --driver=docker
+
+# 2. Configurar o Docker local para o Minikube
+minikube docker-env
+
+# 3. Build das imagens
+docker build -t doadores-frontend ./cadastro-doadores/src/Frontend/
+docker build -t doadores-backend ./cadastro-doadores/src/Backend/
+
+# 4. Criar ConfigMap com o script SQL
+kubectl create configmap mysql-init --from-file=./helm-chart/db-init/init.sql
+
+# 5. Habilitar o Ingress Controller
+minikube addons enable ingress
+
+# 6. Instalar os recursos com Helm
+helm install cadastro-doadores ./helm-chart
+
+# 7. Redirecionar porta do frontend para localhost
+kubectl port-forward svc/frontend 8080:80
+
+# 8. Acessar no navegador
+http://localhost:8080
 ```
+
+> ⚠️ **Observação:** Embora a aplicação abra corretamente via Ingress em `http://k8s.local`, pode ocorrer uma falha de requisição ao backend. O acesso via `kubectl port-forward` funciona normalmente.
+
+---
+
+### 🗂️ Estrutura do Projeto
+
+```bash
 cadastro-doadores/
+│
 ├── src/
-│   ├── Backend/          # Código fonte do backend
-│   ├── Frontend/         # Código fonte do frontend
-├── helm-chart/           # Configurações do Helm Chart
-│   ├── templates/        # Templates Kubernetes
-│   ├── Chart.yaml        # Metadados do Chart
-│   ├── values.yaml       # Valores de configuração
-│   └── db-init/          # Scripts de inicialização do DB
-├── docker-compose.yml    # Configuração para Docker Compose
-├── deploy.ps1           # Script de implantação
-└── README.md            # Documentação do projeto
+│   ├── Backend/         # Código do servidor Node.js
+│   └── Frontend/        # Código React da interface
+│
+├── helm-chart/          # Helm Chart para a aplicação
+│   ├── db-init/         # Script SQL para inicializar o banco
+│   ├── templates/       # Deployments, Services, Ingress
+│   ├── Chart.yaml
+│   └── values.yaml
+│
+├── docker-compose.yml   # Versão Compose para testes locais
+├── deploy.ps1           # Script de deploy com PowerShell
+├── package.json         # Dependências do projeto
+└── README.md            # Este documento
 ```
 
-## Componentes Kubernetes
-
-### 1. Backend
-
-**Deployment**:
-- Imagem: `doadores-backend:latest`
-- Porta: 5000
-- Variáveis de ambiente:
-  - `DB_HOST`: mysql
-  - `DB_USER`: Obtido do Secret
-  - `DB_PASS`: Obtido do Secret
-  - `DB_NAME`: cadastro_doadores
-- Probes configurados (liveness, readiness, startup)
-- Limites de recursos: 500m CPU, 512Mi memória
-
-**Service**:
-- Tipo: ClusterIP
-- Expõe a porta 5000 internamente no cluster
-
-### 2. Frontend
-
-**Deployment**:
-- Imagem: `doadores-frontend:latest`
-- Porta: 80
-- Variável de ambiente:
-  - `API_BASE_URL`: http://backend:5000
-- Probes configurados
-
-**Service**:
-- Tipo: ClusterIP
-- Expõe a porta 80 internamente no cluster
-
-### 3. Banco de Dados MySQL
-
-**Deployment**:
-- Imagem: `mysql:5.7`
-- Porta: 3306
-- Volume para inicialização do banco via ConfigMap
-- Variáveis de ambiente:
-  - `MYSQL_ROOT_PASSWORD`: root
-  - `MYSQL_DATABASE`: cadastro_doadores
-
-**Service**:
-- Tipo: ClusterIP
-- Expõe a porta 3306 internamente no cluster
-
-### 4. Ingress
-
-- Habilita acesso externo à aplicação
-- Configurado para o host `k8s.local`
-- Roteia tráfego para o serviço do frontend
-
-## Configuração do Helm Chart
-
-O projeto utiliza Helm para gerenciamento de pacotes Kubernetes. O arquivo `values.yaml` contém todas as configurações personalizáveis:
-
-- Contagem de réplicas
-- Configurações de imagem para cada componente
-- Recursos alocados (CPU/memória)
-- Configurações de probes
-- Configurações do MySQL
-- Configurações de Ingress
-
-## Implantação Local com Minikube
-
-### Pré-requisitos
-
-- Minikube instalado
-- Docker
-- Helm
-- PowerShell 5.1+
-
-### Passos para Implantação
-
-1. Execute o script `deploy.ps1` que realizará automaticamente:
-   - Inicia o Minikube
-   - Configura o ambiente Docker
-   - Constrói as imagens
-   - Cria o ConfigMap para inicialização do MySQL
-   - Habilita o Ingress no Minikube
-   - Instala o Helm Chart
-
-2. Acesse a aplicação:
-   - Via port-forward: `kubectl port-forward svc/frontend 8080:80` e acesse http://localhost:8080
-   - Ou via Ingress: Adicione `k8s.local` ao seu arquivo hosts apontando para o IP do Minikube e acesse http://k8s.local
-
-## Solução de Problemas
-
-1. **Falha em requisições ao backend**:
-   - Verifique se o serviço do backend está rodando: `kubectl get pods`
-   - Verifique os logs do backend: `kubectl logs <nome-do-pod-backend>`
-   - Verifique a conexão com o MySQL: `kubectl exec -it <nome-do-pod-mysql> -- mysql -u root -p`
-
-2. **Problemas com Ingress**:
-   - Verifique se o addon de Ingress está habilitado: `minikube addons list`
-   - Verifique os pods do Ingress: `kubectl get pods -n ingress-nginx`
-
-## Melhorias Futuras
-
-- Implementar persistência de dados para o MySQL
-- Adicionar autenticação/autorização
-- Configurar CI/CD para builds automatizados
-- Implementar monitoramento com Prometheus/Grafana
-- Adicionar mecanismos de logging centralizado
-
-## Observações
-
-Este projeto foi configurado para ambiente de desenvolvimento local usando Minikube. Para ambientes de produção, recomenda-se:
-
-- Utilizar um registry de imagens (Docker Hub, ECR, GCR)
-- Configurar secrets adequadamente
-- Habilitar persistência de dados
-- Configurar recursos adequados para cada componente
-- Implementar políticas de rede e segurança
